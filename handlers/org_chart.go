@@ -23,7 +23,7 @@ func UpdateOrgChart(c *gin.Context) {
 		ImagePath string `json:"image_path"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 

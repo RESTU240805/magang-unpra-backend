@@ -35,7 +35,7 @@ func UpdateAboutSection(c *gin.Context) {
 		BadgeLabel  string `json:"badge_label"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 

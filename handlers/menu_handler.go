@@ -66,7 +66,7 @@ func GetAllMenus(c *gin.Context) {
 func CreateMenu(c *gin.Context) {
 	var input MenuInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 
@@ -96,7 +96,7 @@ func UpdateMenu(c *gin.Context) {
 
 	var input MenuInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 

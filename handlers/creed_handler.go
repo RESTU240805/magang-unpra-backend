@@ -14,26 +14,12 @@ func GetAllCreeds(c *gin.Context) {
 
 	if err := config.DB.Order("sort_order asc").Find(&creeds).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": "Gagal memuat data",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, creeds)
-}
-
-func GetCreedById(c *gin.Context) {
-	id := c.Param("id")
-	var creed models.Creed
-
-	if err := config.DB.First(&creed, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Creed tidak ditemukan",
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, creed)
 }
 
 func CreateCreed(c *gin.Context) {
@@ -49,7 +35,7 @@ func CreateCreed(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": "Input tidak valid",
 		})
 		return
 	}
@@ -66,7 +52,7 @@ func CreateCreed(c *gin.Context) {
 
 	if err := config.DB.Create(&creed).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": "Gagal menyimpan creed",
 		})
 		return
 	}
@@ -97,7 +83,7 @@ func UpdateCreed(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": "Input tidak valid",
 		})
 		return
 	}
@@ -112,7 +98,7 @@ func UpdateCreed(c *gin.Context) {
 
 	if err := config.DB.Save(&creed).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": "Gagal menyimpan creed",
 		})
 		return
 	}
@@ -133,7 +119,7 @@ func DeleteCreed(c *gin.Context) {
 
 	if err := config.DB.Delete(&creed).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
+			"error": "Gagal menghapus creed",
 		})
 		return
 	}

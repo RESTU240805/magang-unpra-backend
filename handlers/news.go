@@ -16,11 +16,23 @@ func makeSlug(title string) string {
 	for _, r := range strings.ToLower(title) {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			result.WriteRune(r)
-		} else if unicode.IsSpace(r) {
+		} else if unicode.IsSpace(r) || r == '-' || r == '_' {
 			result.WriteRune('-')
 		}
 	}
 	return result.String()
+}
+
+func makeUniqueSlug(title string, excludeID uint) string {
+	slug := makeSlug(title)
+	if slug == "" {
+		slug = "untitled"
+	}
+	var existing models.News
+	for config.DB.Where("slug = ?", slug).Not("id = ?", excludeID).First(&existing).Error == nil {
+		slug = slug + "-1"
+	}
+	return slug
 }
 
 // GET /api/news — hanya yang published, untuk halaman publik
@@ -63,18 +75,13 @@ func CreateNews(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
-	}
-
-	slug := input.Slug
-	if slug == "" {
-		slug = makeSlug(input.Title)
 	}
 
 	news := models.News{
 		Title:         input.Title,
-		Slug:          slug,
+		Slug:          makeUniqueSlug(input.Title, 0),
 		Summary:       input.Summary,
 		Content:       input.Content,
 		Category:      input.Category,
@@ -82,12 +89,9 @@ func CreateNews(c *gin.Context) {
 		IsPublished:   input.IsPublished,
 	}
 
-	// Jika admin mengisi tanggal, gunakan tanggal tersebut
-	// Jika tidak diisi, otomatis pakai waktu sekarang
 	if input.PublishedAt != nil && *input.PublishedAt != "" {
 		parsed, err := time.Parse("2006-01-02", *input.PublishedAt)
 		if err != nil {
-			// coba format lengkap
 			parsed, err = time.Parse(time.RFC3339, *input.PublishedAt)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Format tanggal tidak valid. Gunakan YYYY-MM-DD"})
@@ -101,7 +105,7 @@ func CreateNews(c *gin.Context) {
 	}
 
 	if err := config.DB.Omit("Images").Create(&news).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan berita"})
 		return
 	}
 
@@ -137,7 +141,7 @@ func UpdateNews(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 
@@ -150,9 +154,9 @@ func UpdateNews(c *gin.Context) {
 	news.IsPublished = input.IsPublished
 
 	if input.Slug != "" {
-		news.Slug = input.Slug
-	} else if news.Slug == "" {
-		news.Slug = makeSlug(input.Title)
+		news.Slug = makeUniqueSlug(input.Slug, news.ID)
+	} else {
+		news.Slug = makeUniqueSlug(input.Title, news.ID)
 	}
 
 	// Jika admin mengisi tanggal baru, update; jika tidak diisi, biarkan tanggal lama
@@ -169,7 +173,7 @@ func UpdateNews(c *gin.Context) {
 	}
 
 	if err := config.DB.Save(&news).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan berita"})
 		return
 	}
 
@@ -188,7 +192,7 @@ func DeleteNews(c *gin.Context) {
 	id := c.Param("id")
 	config.DB.Where("news_id = ?", id).Delete(&models.NewsImage{})
 	if err := config.DB.Delete(&models.News{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus berita"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "News deleted"})

@@ -9,7 +9,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// ── Public endpoint (tree) ──
+type orgGroupInput struct {
+	Label     string `json:"label"`
+	Color     string `json:"color"`
+	SortOrder int    `json:"sort_order"`
+}
+
+type orgNodeInput struct {
+	GroupID   uint   `json:"group_id"`
+	ParentID  *uint  `json:"parent_id"`
+	Name      string `json:"name"`
+	Role      string `json:"role"`
+	PhotoPath string `json:"photo_path"`
+	SortOrder int    `json:"sort_order"`
+}
 
 func GetOrgStructure(c *gin.Context) {
 	var groups []models.OrgGroup
@@ -21,8 +34,6 @@ func GetOrgStructure(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": groups})
 }
 
-// ── OrgGroup CRUD ──
-
 func GetAllOrgGroups(c *gin.Context) {
 	var groups []models.OrgGroup
 	config.DB.Preload("Nodes").Order("sort_order ASC, id ASC").Find(&groups)
@@ -30,13 +41,18 @@ func GetAllOrgGroups(c *gin.Context) {
 }
 
 func CreateOrgGroup(c *gin.Context) {
-	var input models.OrgGroup
+	var input orgGroupInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
-	config.DB.Create(&input)
-	c.JSON(http.StatusCreated, gin.H{"data": input})
+	group := models.OrgGroup{
+		Label:     input.Label,
+		Color:     input.Color,
+		SortOrder: input.SortOrder,
+	}
+	config.DB.Create(&group)
+	c.JSON(http.StatusCreated, gin.H{"data": group})
 }
 
 func UpdateOrgGroup(c *gin.Context) {
@@ -46,9 +62,9 @@ func UpdateOrgGroup(c *gin.Context) {
 		return
 	}
 
-	var input models.OrgGroup
+	var input orgGroupInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 
@@ -69,8 +85,6 @@ func DeleteOrgGroup(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Group deleted"})
 }
 
-// ── OrgNode CRUD ──
-
 func GetAllOrgNodes(c *gin.Context) {
 	var nodes []models.OrgNode
 	config.DB.Order("sort_order ASC, id ASC").Find(&nodes)
@@ -78,13 +92,21 @@ func GetAllOrgNodes(c *gin.Context) {
 }
 
 func CreateOrgNode(c *gin.Context) {
-	var input models.OrgNode
+	var input orgNodeInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
-	config.DB.Create(&input)
-	c.JSON(http.StatusCreated, gin.H{"data": input})
+	node := models.OrgNode{
+		GroupID:   input.GroupID,
+		ParentID:  input.ParentID,
+		Name:      input.Name,
+		Role:      input.Role,
+		PhotoPath: input.PhotoPath,
+		SortOrder: input.SortOrder,
+	}
+	config.DB.Create(&node)
+	c.JSON(http.StatusCreated, gin.H{"data": node})
 }
 
 func UpdateOrgNode(c *gin.Context) {
@@ -94,9 +116,9 @@ func UpdateOrgNode(c *gin.Context) {
 		return
 	}
 
-	var input models.OrgNode
+	var input orgNodeInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 
@@ -117,8 +139,6 @@ func DeleteOrgNode(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Node deleted"})
 }
-
-// ── Reset to template ──
 
 func ResetOrgStructure(c *gin.Context) {
 	config.DB.Exec("DELETE FROM org_nodes")

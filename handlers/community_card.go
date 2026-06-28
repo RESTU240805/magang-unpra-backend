@@ -31,7 +31,7 @@ func CreateCommunityCard(c *gin.Context) {
 		Images      []models.CommunityCardImage `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 	if input.Link == "" {
@@ -75,7 +75,7 @@ func UpdateCommunityCard(c *gin.Context) {
 		Images      []models.CommunityCardImage `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 

@@ -20,23 +20,33 @@ func GetAllTeamMembersAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": members})
 }
 
-func GetTeamMemberById(c *gin.Context) {
-	var member models.TeamMember
-	if err := config.DB.First(&member, c.Param("id")).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Team member not found"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"data": member})
+type teamMemberInput struct {
+	Name        string `json:"name"`
+	Position    string `json:"position"`
+	Description string `json:"description"`
+	PhotoPath   string `json:"photo_path"`
+	SortOrder   int    `json:"sort_order"`
+	IsActive    bool   `json:"is_active"`
+	IsFeatured  bool   `json:"is_featured"`
 }
 
 func CreateTeamMember(c *gin.Context) {
-	var input models.TeamMember
+	var input teamMemberInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
-	config.DB.Create(&input)
-	c.JSON(http.StatusCreated, gin.H{"data": input})
+	member := models.TeamMember{
+		Name:        input.Name,
+		Position:    input.Position,
+		Description: input.Description,
+		PhotoPath:   input.PhotoPath,
+		SortOrder:   input.SortOrder,
+		IsActive:    input.IsActive,
+		IsFeatured:  input.IsFeatured,
+	}
+	config.DB.Create(&member)
+	c.JSON(http.StatusCreated, gin.H{"data": member})
 }
 
 func UpdateTeamMember(c *gin.Context) {
@@ -46,9 +56,9 @@ func UpdateTeamMember(c *gin.Context) {
 		return
 	}
 
-	var input models.TeamMember
+	var input teamMemberInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
 	}
 

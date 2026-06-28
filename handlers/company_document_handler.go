@@ -23,17 +23,6 @@ func GetAllCompanyDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, docs)
 }
 
-// GET /api/admin/company-documents/:id
-func GetCompanyDocumentById(c *gin.Context) {
-	id := c.Param("id")
-	var doc models.CompanyDocument
-	if err := config.DB.First(&doc, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Dokumen tidak ditemukan"})
-		return
-	}
-	c.JSON(http.StatusOK, doc)
-}
-
 // POST /api/admin/company-documents
 func CreateCompanyDocument(c *gin.Context) {
 	title := c.PostForm("title")
@@ -45,8 +34,18 @@ func CreateCompanyDocument(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err == nil {
+		if file.Size > 10<<20 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File terlalu besar. Maksimal 10 MB"})
+			return
+		}
+
 		ext := filepath.Ext(file.Filename)
-		fileType = ext[1:] // tanpa titik, contoh "pdf"
+		allowedDocExts := map[string]bool{".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true, ".ppt": true, ".pptx": true}
+		if !allowedDocExts[ext] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Format file tidak didukung. Gunakan PDF, DOC, XLS, atau PPT"})
+			return
+		}
+		fileType = ext[1:]
 
 		filename := strconv.FormatInt(time.Now().UnixNano(), 10) + ext
 		savePath := filepath.Join("uploads", filename)
@@ -99,12 +98,22 @@ func UpdateCompanyDocument(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err == nil {
-		// hapus file lama
+		if file.Size > 10<<20 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File terlalu besar. Maksimal 10 MB"})
+			return
+		}
+
+		ext := filepath.Ext(file.Filename)
+		allowedDocExts := map[string]bool{".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true, ".ppt": true, ".pptx": true}
+		if !allowedDocExts[ext] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Format file tidak didukung. Gunakan PDF, DOC, XLS, atau PPT"})
+			return
+		}
+
 		if doc.FileURL != "" {
 			os.Remove("." + doc.FileURL)
 		}
 
-		ext := filepath.Ext(file.Filename)
 		doc.FileType = ext[1:]
 
 		filename := strconv.FormatInt(time.Now().UnixNano(), 10) + ext

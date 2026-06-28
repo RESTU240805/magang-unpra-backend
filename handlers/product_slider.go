@@ -14,11 +14,24 @@ func GetAllSlides(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": slides})
 }
 
+type slideInput struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	ImageURL    string `json:"image_url"`
+	SortOrder   int    `json:"sort_order"`
+}
+
 func CreateSlide(c *gin.Context) {
-	var slide models.ProductSlider
-	if err := c.ShouldBindJSON(&slide); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var input slideInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
 		return
+	}
+	slide := models.ProductSlider{
+		Title:       input.Title,
+		Description: input.Description,
+		ImageURL:    input.ImageURL,
+		SortOrder:   input.SortOrder,
 	}
 	config.DB.Create(&slide)
 	c.JSON(http.StatusCreated, gin.H{"data": slide})
@@ -31,8 +44,11 @@ func UpdateSlide(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Slide not found"})
 		return
 	}
-	var input models.ProductSlider
-	c.ShouldBindJSON(&input)
+	var input slideInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Input tidak valid"})
+		return
+	}
 	slide.Title = input.Title
 	slide.Description = input.Description
 	slide.ImageURL = input.ImageURL
