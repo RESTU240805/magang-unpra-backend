@@ -59,7 +59,7 @@ func UploadImage(c *gin.Context) {
 	}
 
 	uploadDir := "./uploads"
-	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(uploadDir, 0750); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat folder"})
 		return
 	}
@@ -126,7 +126,7 @@ func UploadDocument(c *gin.Context) {
 	}
 
 	uploadDir := "./uploads"
-	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(uploadDir, 0750); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat folder"})
 		return
 	}

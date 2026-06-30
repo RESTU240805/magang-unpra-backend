@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"magang-unpra-backend/config"
@@ -39,12 +40,36 @@ func CreateCompanyDocument(c *gin.Context) {
 			return
 		}
 
-		ext := filepath.Ext(file.Filename)
+		ext := strings.ToLower(filepath.Ext(file.Filename))
 		allowedDocExts := map[string]bool{".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true, ".ppt": true, ".pptx": true}
 		if !allowedDocExts[ext] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Format file tidak didukung. Gunakan PDF, DOC, XLS, atau PPT"})
 			return
 		}
+
+		src, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file"})
+			return
+		}
+		defer src.Close()
+
+		buf := make([]byte, 512)
+		n, _ := src.Read(buf)
+		mimeType := http.DetectContentType(buf[:n])
+		docMimePrefixes := []string{"application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument", "application/vnd.ms-excel", "application/vnd.ms-powerpoint"}
+		validMime := false
+		for _, prefix := range docMimePrefixes {
+			if strings.HasPrefix(strings.ToLower(mimeType), prefix) {
+				validMime = true
+				break
+			}
+		}
+		if !validMime {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File dokumen tidak valid"})
+			return
+		}
+
 		fileType = ext[1:]
 
 		filename := strconv.FormatInt(time.Now().UnixNano(), 10) + ext
@@ -103,10 +128,33 @@ func UpdateCompanyDocument(c *gin.Context) {
 			return
 		}
 
-		ext := filepath.Ext(file.Filename)
+		ext := strings.ToLower(filepath.Ext(file.Filename))
 		allowedDocExts := map[string]bool{".pdf": true, ".doc": true, ".docx": true, ".xls": true, ".xlsx": true, ".ppt": true, ".pptx": true}
 		if !allowedDocExts[ext] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Format file tidak didukung. Gunakan PDF, DOC, XLS, atau PPT"})
+			return
+		}
+
+		src, err := file.Open()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca file"})
+			return
+		}
+		defer src.Close()
+
+		buf := make([]byte, 512)
+		n, _ := src.Read(buf)
+		mimeType := http.DetectContentType(buf[:n])
+		docMimePrefixes := []string{"application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument", "application/vnd.ms-excel", "application/vnd.ms-powerpoint"}
+		validMime := false
+		for _, prefix := range docMimePrefixes {
+			if strings.HasPrefix(strings.ToLower(mimeType), prefix) {
+				validMime = true
+				break
+			}
+		}
+		if !validMime {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "File dokumen tidak valid"})
 			return
 		}
 

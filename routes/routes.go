@@ -30,9 +30,9 @@ func SetupRoutes() *gin.Engine {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Serve uploaded files
+	// Serve public static files
 	r.Static("/uploads", "./uploads")
-	r.Static("/pulp proces", "./pulp proces")
+	r.Static("/pulp-process", "./pulp proces")
 	r.Static("/safety", "./safety")
 
 	r.GET("/ping", func(c *gin.Context) {
@@ -52,6 +52,9 @@ func SetupRoutes() *gin.Engine {
 	api := r.Group("/api")
 	api.Use(middleware.RateLimit(60, time.Minute))
 	{
+		// Auth
+		api.GET("/auth/me", middleware.AuthRequired(), handlers.GetCurrentUser)
+
 		// Public
 		api.GET("/news", handlers.GetAllNews)
 		api.GET("/news/:id", handlers.GetNewsById)
@@ -62,6 +65,7 @@ func SetupRoutes() *gin.Engine {
 		api.GET("/product-slides", handlers.GetAllSlides)
 		api.GET("/product-page", handlers.GetProductPage)
 		api.GET("/team-members", handlers.GetAllTeamMembers)
+		api.GET("/org-chart", handlers.GetOrgChart)
 		api.GET("/community-cards", handlers.GetAllCommunityCards)
 		api.GET("/creeds", handlers.GetAllCreeds)
 		api.GET("/company-documents", handlers.GetAllCompanyDocuments)

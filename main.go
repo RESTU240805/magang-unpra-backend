@@ -56,5 +56,17 @@ func main() {
 		port = "8080"
 	}
 
-	r.Run(":" + port)
+	tlsCert := os.Getenv("TLS_CERT")
+	tlsKey := os.Getenv("TLS_KEY")
+
+	if tlsCert != "" && tlsKey != "" {
+		log.Printf("Server running on https://0.0.0.0:%s", port)
+		if err := r.RunTLS(":"+port, tlsCert, tlsKey); err != nil {
+			log.Fatal("Failed to start HTTPS server:", err)
+		}
+	} else {
+		log.Printf("WARNING: Running without TLS. Set TLS_CERT and TLS_KEY in .env for HTTPS.")
+		log.Printf("Server running on http://0.0.0.0:%s", port)
+		r.Run(":" + port)
+	}
 }

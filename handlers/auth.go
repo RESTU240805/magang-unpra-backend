@@ -111,7 +111,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("token", tokenString, 7200, "/", "", false, true)
+	c.SetCookie("token", tokenString, 7200, "/", "", true, true)
+	c.Header("Set-Cookie", c.Writer.Header().Get("Set-Cookie")+"; SameSite=Strict")
 
 	c.JSON(http.StatusOK, gin.H{
 		"token": tokenString,
@@ -119,6 +120,20 @@ func Login(c *gin.Context) {
 			"name":  user.Email,
 			"email": user.Email,
 			"role":  user.Role,
+		},
+	})
+}
+
+func GetCurrentUser(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	email, _ := c.Get("email")
+	role, _ := c.Get("role")
+
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"user_id": userID,
+			"email":   email,
+			"role":    role,
 		},
 	})
 }
