@@ -34,6 +34,7 @@ func SetupRoutes() *gin.Engine {
 	r.Static("/uploads", "./uploads")
 	r.Static("/pulp-process", "./pulp proces")
 	r.Static("/safety", "./safety")
+	r.Static("/images", "../magang-unpra-frontend/public/images")
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
